@@ -150,6 +150,7 @@ func reformNode(node *html.Node, filename string) {
 	if node.Type == html.ElementNode {
 		replaceFootnote(node)
 		replaceIframe(node)
+		replaceHr(node)
 		notifyAmazonImgLink(node, filename)
 	}
 
@@ -281,6 +282,28 @@ func replaceIframe(node *html.Node) {
 				node.InsertBefore(pNode, iframe)
 				node.RemoveChild(iframe)
 				break
+			}
+		}
+	}
+}
+
+// -- を <hr/> に置換する
+func replaceHr(node *html.Node) {
+	hrPattern := regexp.MustCompile(`^--+`)
+
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		if child.Type == html.ElementNode && child.Data == "p" {
+			for grandchild := child.FirstChild; grandchild != nil; grandchild = grandchild.NextSibling {
+				if grandchild.Type == html.TextNode && hrPattern.MatchString(grandchild.Data) {
+					hrNode := &html.Node{
+						Type: html.ElementNode,
+						Data: "hr",
+					}
+
+					node.InsertBefore(hrNode, child)
+					node.RemoveChild(child)
+					break
+				}
 			}
 		}
 	}
