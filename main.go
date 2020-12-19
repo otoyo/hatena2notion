@@ -151,6 +151,7 @@ func reformNode(node *html.Node, filename string) {
 		replaceFootnote(node)
 		replaceIframe(node)
 		replaceHr(node)
+		replaceLink(node)
 		notifyAmazonImgLink(node, filename)
 	}
 
@@ -302,6 +303,23 @@ func replaceHr(node *html.Node) {
 
 					node.InsertBefore(hrNode, child)
 					node.RemoveChild(child)
+					break
+				}
+			}
+		}
+	}
+}
+
+func replaceLink(node *html.Node) {
+	oldURL := os.Getenv("OLD_URL")
+	newURL := os.Getenv("NEW_URL")
+
+	if oldURL != "" && newURL != "" {
+		if node.Type == html.ElementNode && node.Data == "a" {
+			for i, attr := range node.Attr {
+				if attr.Key == "href" {
+					attr.Val = strings.ReplaceAll(attr.Val, oldURL, newURL)
+					node.Attr[i] = attr
 					break
 				}
 			}
