@@ -38,12 +38,11 @@ func main() {
 	flag.Parse()
 	subcommand := flag.Arg(0)
 
-	if subcommand == "build" {
+	if subcommand == "extract" {
 		extract(*exportFilepath)
+		reform()
 	} else if subcommand == "upload" {
 		upload(client)
-	} else {
-		reform()
 	}
 }
 
