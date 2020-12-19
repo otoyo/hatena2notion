@@ -184,7 +184,7 @@ func notifyAmazonImgLink(node *html.Node, filename string) {
 
 // iframe を置き換える
 // 1. cite > a を兄弟に持つ iframe の場合、a タグの内容がドメインだけになっている
-//   iframe[title] からタイトルを取得して a タグの内容にセットし iframe, cite を削除する
+//   iframe[title] or a[href] をタイトルとして a タグの内容にセットし iframe, cite を削除する
 // 2. iframe のみ場合
 //   iframe[src] からURLを取得し a タグの href と内容にセットし iframe を削除する
 func replaceIframe(node *html.Node) {
@@ -201,7 +201,7 @@ func replaceIframe(node *html.Node) {
 	}
 
 	if iframe != nil && cite != nil {
-		var title string
+		title := ""
 		for _, attr := range iframe.Attr {
 			if attr.Key == "title" {
 				title = attr.Val
@@ -236,6 +236,9 @@ func replaceIframe(node *html.Node) {
 			Attr: attrs,
 		}
 
+		if title == "" {
+			title = href
+		}
 		textNode := &html.Node{
 			Type: html.TextNode,
 			Data: title,
