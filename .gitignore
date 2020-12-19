@@ -1,0 +1,6 @@
+tmp/*
+html/*
+csv/*
+images/*
+
+!.gitkeep
