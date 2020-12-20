@@ -11,7 +11,9 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
+	"github.com/cheggaaa/pb/v3"
 	"github.com/kjk/notionapi"
 	"github.com/otoyo/movabletype"
 	"golang.org/x/net/html"
@@ -348,18 +350,73 @@ func replaceFootnote(node *html.Node) {
 }
 
 func upload(client *notionapi.Client) {
-	url := ""
-	filename, err := downloadImageFromURL(url)
+	filenames, err := filepath.Glob("tmp/*.html")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fileURL, err := uploadImageToNotion(client, filename)
-	if err != nil {
-		log.Fatal(err)
+	bar := pb.StartNew(len(filenames))
+
+	for _, filename := range filenames {
+		bar.Increment()
+		time.Sleep(3 * time.Second)
+
+		file, err := os.Open(filename)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		doc, err := html.Parse(file)
+		if err != nil {
+			log.Fatal(err)
+		}
+		file.Close()
+
+		searchAndReplaceImgURL(client, doc)
+
+		file, err = os.Create("html/" + filepath.Base(filename))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = html.Render(file, doc)
+		if err != nil {
+			log.Fatal(err)
+		}
+		file.Close()
 	}
 
-	fmt.Printf("Image uploaded. fileURL: %s", fileURL)
+	bar.Finish()
+}
+
+func searchAndReplaceImgURL(client *notionapi.Client, node *html.Node) {
+	if node.Type == html.ElementNode && node.Data == "img" {
+		hatenaDomain := regexp.MustCompile(`hatena\.com`)
+
+		for i, attr := range node.Attr {
+			if attr.Key == "src" && hatenaDomain.MatchString(attr.Val) {
+				filename, err := downloadImageFromURL(attr.Val)
+				if err != nil {
+					fmt.Printf("Failed to download image. file: %s error: %#v", filename, err)
+					continue
+				}
+
+				fileURL, err := uploadImageToNotion(client, filename)
+				if err != nil {
+					fmt.Printf("Failed to upload image. file: %s error: %#v", filename, err)
+					continue
+				}
+
+				attr.Val = fileURL
+				node.Attr[i] = attr
+				break
+			}
+		}
+	}
+
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		searchAndReplaceImgURL(client, child)
+	}
 }
 
 func downloadImageFromURL(url string) (filename string, err error) {
@@ -367,13 +424,13 @@ func downloadImageFromURL(url string) (filename string, err error) {
 
 	response, err := http.Get(url)
 	if err != nil {
-		return "", err
+		return filename, err
 	}
 	defer response.Body.Close()
 
 	file, err := os.Create(filename)
 	if err != nil {
-		return "", err
+		return filename, err
 	}
 	defer file.Close()
 
