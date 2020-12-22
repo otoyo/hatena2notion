@@ -82,7 +82,7 @@ func extract(exportFilepath string) {
 			Body:    entry.Body + entry.ExtendedBody,
 			Date:    entry.Date.Format(dateFormat),
 			Tags:    strings.Join(entry.Category, ", "),
-			Excerpt: entry.Excerpt,
+			Excerpt: strings.Trim(entry.Excerpt, "\n"),
 			Author:  entry.Author,
 		}
 
