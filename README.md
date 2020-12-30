@@ -65,6 +65,10 @@ $ ./hatena2notion upload
 
 HTML ファイルは手動で Notion へ一括インポートしてください。
 
+hatena2notion によってアップロードした画像を Notion Blog で表示したい場合は、下記コミットを参考に画像ソースを修正してください。
+
+* [Fix image source - otoyo/notion-blog.git](https://github.com/otoyo/notion-blog/commit/22d21cab811851fdb01c2c2b96b45237d828e40f)
+
 また、ダウンロードした画像は `images/` 以下に保存されます。
 
 ## 機能詳細
